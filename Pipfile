@@ -7,6 +7,12 @@ name = "pypi"
 fastapi = {extras = ["standard"], version = "*"}
 pydantic-settings = "*"
 python-dotenv = "*"
+sentence-transformers = "*"
+python-terrier = "*"
+google-cloud-storage = "*"
+datasets = "*"
+pandas = "*"
+google-cloud-secret-manager = "*"
 
 [dev-packages]
 pre-commit = "*"

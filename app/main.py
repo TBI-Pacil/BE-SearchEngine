@@ -1,13 +1,17 @@
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.utils.index import initialize_data
+
 from .config import settings
 from .context import lifespan
 from .routers import health_check, search
 
 app = FastAPI(lifespan=lifespan)
-api_v1 = APIRouter(prefix='/api/v1')
 
+initialize_data()
+
+api_v1 = APIRouter(prefix='/api/v1')
 
 # Middlewares
 app.add_middleware(
