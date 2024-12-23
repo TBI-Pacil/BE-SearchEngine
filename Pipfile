@@ -12,6 +12,7 @@ python-terrier = "*"
 google-cloud-storage = "*"
 datasets = "*"
 pandas = "*"
+google-cloud-secret-manager = "*"
 
 [dev-packages]
 pre-commit = "*"

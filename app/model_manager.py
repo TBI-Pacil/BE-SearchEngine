@@ -16,6 +16,13 @@ class ModelManager:
         self.pipeline = None
         self.index = None
         self.dataframe = None
+        self.env = (os.getenv('LOCAL_DEVELOPMENT', 'False') == 'True')
+
+    def get_data_dir(self) -> str:
+        if self.env:
+            return os.path.join(os.path.abspath(os.curdir), "downloads")
+        else:
+            return os.path.join('/tmp', 'downloads')
 
     def load_pipeline(self, config):
         bm25 = pt.BatchRetrieve(self.index, wmodel="BM25")
@@ -51,12 +58,21 @@ class ModelManager:
         if not pt.started():
             pt.init()
 
-        ROOT_DIR = os.path.abspath(os.curdir)
+        data_dir = self.get_data_dir()
 
-        with open(os.path.join(ROOT_DIR, "downloads/config.pkl"), 'rb') as f:
+        config_path = os.path.join(data_dir, "config.pkl")
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Config file not found at {config_path}")
+
+        print(f"Loading config from: {config_path}")
+        with open(config_path, 'rb') as f:
             loaded_components = pickle.load(f)
 
-        index_path = os.path.join(ROOT_DIR, "downloads/index/pyterrier")
+        index_path = os.path.join(data_dir, "index/pyterrier")
+        if not os.path.exists(index_path):
+            raise FileNotFoundError(f"Index not found at {index_path}")
+
+        print(f"Loading index from: {index_path}")
 
         self.cutoff = loaded_components['cut_off']
         self.index = pt.IndexFactory.of(index_path)

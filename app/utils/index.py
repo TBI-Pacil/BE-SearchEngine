@@ -1,31 +1,43 @@
+import json
 import os
 
-from google.cloud import storage
+from google.cloud import secretmanager, storage
 from google.oauth2 import service_account
 
 
 def authenticate_with_service_account():
-    ROOT_DIR = os.path.abspath(os.curdir)
-    credentials_path = os.path.join(ROOT_DIR, "downloads/creds.json")
-
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-
-    if not credentials_path or not os.path.exists(credentials_path):
-        raise EnvironmentError(
-            "The GOOGLE_APPLICATION_CREDENTIALS environment variable is not set"
-        )
     try:
-        credentials = service_account.Credentials.from_service_account_file(
-            credentials_path)
-        print(f"Authenticated using service account: {credentials_path}")
+        if (os.getenv('LOCAL_DEVELOPMENT', 'False') == 'True'):
+            credentials_path = os.path.join(
+                os.path.abspath(os.curdir), "downloads/creds.json")
+            if os.path.exists(credentials_path):
+                return service_account.Credentials.from_service_account_file(credentials_path)
+
+        secret_client = secretmanager.SecretManagerServiceClient()
+        secret_name = os.getenv('SERVICE_ACCOUNT_SECRET_NAME')
+        project_id = os.getenv('PROJECT_ID')
+
+        if not secret_name or not project_id:
+            raise EnvironmentError(
+                "Required environment variables are not set")
+
+        secret_path = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+        response = secret_client.access_secret_version(
+            request={"name": secret_path})
+        credentials_dict = json.loads(response.payload.data.decode("UTF-8"))
+
+        credentials = service_account.Credentials.from_service_account_info(
+            credentials_dict)
+        print("Successfully authenticated using service account from Secret Manager")
         return credentials
+
     except Exception as e:
         raise EnvironmentError(f"Failed to load credentials: {str(e)}")
 
 
-def download_index(bucket_name: str, local_dir: str = "index"):
+def download_index(bucket_name: str, local_dir: str = "index", credentials=None):
     try:
-        client = storage.Client()
+        client = storage.Client(credentials=credentials)
         bucket = client.get_bucket(bucket_name)
         blobs = bucket.list_blobs()
 
@@ -49,24 +61,33 @@ def download_index(bucket_name: str, local_dir: str = "index"):
         return []
 
 
-def main():
-    authenticate_with_service_account()
-
-    default_bucket_name = "covid-tbi"
-    default_local_dir = os.path.join(os.path.abspath(os.curdir), "downloads")
-
+def initialize_data():
     try:
+        credentials = authenticate_with_service_account()
+
+        if (os.getenv('LOCAL_DEVELOPMENT', 'False') == 'True'):
+            default_local_dir = os.path.join(
+                os.path.abspath(os.curdir), "downloads")
+        else:
+            default_local_dir = os.path.join('/tmp', 'downloads')
+
+        default_bucket_name = os.getenv('BUCKET_NAME', 'covid-tbi')
+
+        print(f"Using storage directory: {default_local_dir}")
+
         downloaded_folders = download_index(
-            bucket_name=default_bucket_name, local_dir=default_local_dir)
+            bucket_name=default_bucket_name,
+            local_dir=default_local_dir,
+            credentials=credentials
+        )
 
         if downloaded_folders:
             print("Download completed successfully.")
-            print(f"Downloaded folders: {downloaded_folders}")
         else:
             print("No folders were downloaded.")
+
+        return default_local_dir
+
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-
-if __name__ == "__main__":
-    main()
+        print(f"An error occurred during initialization: {str(e)}")
+        raise

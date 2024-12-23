@@ -29,6 +29,8 @@ USER appuser
 
 COPY . .
 
+RUN mkdir -p /tmp/downloads
+
 EXPOSE 8000
 
 # Run the application.

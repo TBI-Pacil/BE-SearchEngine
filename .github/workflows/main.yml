@@ -8,6 +8,10 @@ on:
 env:
   project_name: "be-search-engine"
   FRONTEND_URL: ${{ vars.FRONTEND_URL}}
+  INDEX_PATH: ${{ vars.INDEX_PATH}}
+  LOCAL_DEVELOPMENT: ${{ vars.LOCAL_DEVELOPMENT}}
+  PROJECT_ID: ${{ vars.PROJECT_ID }}
+  SERVICE_ACCOUNT_SECRET_NAME: ${{ vars.SERVICE_ACCOUNT_SECRET_NAME }}
 
 jobs:
   build:
@@ -64,3 +68,7 @@ jobs:
           region: "us-central1"
           env_vars: |-
             FRONTEND_URL=${{ env.FRONTEND_URL }}
+            INDEX_PATH=${{ env.INDEX_PATH }}
+            LOCAL_DEVELOPMENT=${{ env.LOCAL_DEVELOPMENT }}
+            PROJECT_ID=${{ env.PROJECT_ID }}
+            SERVICE_ACCOUNT_SECRET_NAME=${{ env.SERVICE_ACCOUNT_SECRET_NAME }}
