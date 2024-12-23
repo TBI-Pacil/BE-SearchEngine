@@ -20,6 +20,9 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
+RUN apt-get update -q \
+    && apt-get install --no-install-recommends -qy python3-dev g++ gcc
+
 RUN --mount=type=bind,source=Pipfile,target=Pipfile \
     --mount=type=bind,source=Pipfile.lock,target=Pipfile.lock \
     --mount=type=cache,target=/root/.cache/pip \
