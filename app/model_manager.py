@@ -20,7 +20,7 @@ class ModelManager:
 
     def get_data_dir(self) -> str:
         if self.env:
-            return os.path.join(os.path.abspath(os.curdir), "downloads")
+            return os.path.join(os.path.abspath(os.curdir), "storage")
         else:
             return os.path.join('/tmp', 'downloads')
 
